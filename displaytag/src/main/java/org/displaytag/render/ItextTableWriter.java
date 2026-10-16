@@ -76,6 +76,10 @@ public class ItextTableWriter extends TableWriterAdapter {
      */
     private Font defaultFont;
 
+    private BaseFont regularBaseFont;
+
+    private BaseFont boldBaseFont;
+
     /**
      * This table writer uses an iText table and document to do its work.
      *
@@ -149,6 +153,7 @@ public class ItextTableWriter extends TableWriterAdapter {
             File fontFile = getFontFile(bold);
             return BaseFont.createFont(fontFile.getAbsolutePath(), BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
         } catch (Exception e) {
+            log.warn("Unable to load the configured PDF font, falling back to Helvetica", e);
             return FontFactory
                     .getFont(FontFactory.HELVETICA, 10, bold ? Font.BOLD : Font.NORMAL, new Color(0x00, 0x00, 0x00))
                     .getBaseFont();
@@ -160,12 +165,33 @@ public class ItextTableWriter extends TableWriterAdapter {
     }
 
     /**
+     * Gets the base font for this writer, loading it only once per writer. Embedded fonts keep per-document state, so
+     * the instance is deliberately not shared between writers.
+     */
+    private BaseFont getBaseFont(final boolean bold) {
+        if (bold) {
+            if (this.boldBaseFont == null) {
+                this.boldBaseFont = createBaseFont(true);
+            }
+            return this.boldBaseFont;
+        }
+        if (this.regularBaseFont == null) {
+            this.regularBaseFont = createBaseFont(false);
+        }
+        return this.regularBaseFont;
+    }
+
+    private Font getFont(final boolean bold, final float size) {
+        return new Font(this.getBaseFont(bold), size);
+    }
+
+    /**
      * Obtain the font used to render text in the table; Meant to be overriden if a different font is desired.
      *
      * @return The font used to render text in the table.
      */
     protected Font getTableFont() {
-        return createFont(false, 10);
+        return this.getFont(false, 10);
     }
 
     /**
@@ -217,7 +243,7 @@ public class ItextTableWriter extends TableWriterAdapter {
      * @return The caption font.
      */
     protected Font getCaptionFont() {
-        return createFont(true, 17);
+        return this.getFont(true, 17);
     }
 
     /**
@@ -345,8 +371,7 @@ public class ItextTableWriter extends TableWriterAdapter {
         if (!model.getProperties().getShowHeader() || tableWidth <= 0) {
             return minimums;
         }
-        final BaseFont baseFont = ItextTableWriter.createFont(true, this.defaultFont.getSize())
-                .getCalculatedBaseFont(false);
+        final BaseFont baseFont = this.getFont(true, this.defaultFont.getSize()).getCalculatedBaseFont(false);
         final float fontSize = this.defaultFont.getCalculatedSize();
         final PdfPCell sample = new PdfPCell();
         // cell padding plus a little slack for the borders and rounding
@@ -529,7 +554,7 @@ public class ItextTableWriter extends TableWriterAdapter {
      * @return The footer font.
      */
     protected Font getFooterFont() {
-        return createFont(false, 10);
+        return this.getFont(false, 10);
     }
 
     /**
@@ -709,7 +734,7 @@ public class ItextTableWriter extends TableWriterAdapter {
         Font font = chunk.getFont();
         Font newFont;
         try {
-            newFont = createFont(true, font.getSize());
+            newFont = this.getFont(true, font.getSize());
         } catch (Exception e) {
             newFont = FontFactory.getFont(font.getFamilyname(), font.getSize(), Font.BOLD, color);
         }

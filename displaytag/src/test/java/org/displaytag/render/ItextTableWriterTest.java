@@ -173,6 +173,17 @@ class ItextTableWriterTest {
     }
 
     /**
+     * A writer loads each base font only once.
+     */
+    @Test
+    void baseFontIsReusedWithinWriter() {
+        final ItextTableWriter writer = new ItextTableWriter(new com.lowagie.text.pdf.PdfPTable(1),
+                new com.lowagie.text.Document());
+        Assertions.assertSame(writer.getTableFont().getBaseFont(), writer.getFooterFont().getBaseFont());
+        Assertions.assertSame(writer.getCaptionFont().getBaseFont(), writer.getCaptionFont().getBaseFont());
+    }
+
+    /**
      * Exports a table where column 2 and 5 are empty, and column i has values of length (i + 1) * 3. Row 1001 contains
      * a very long value in column 0, which must not influence the widths.
      */
