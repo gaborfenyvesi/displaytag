@@ -1525,7 +1525,7 @@ public class TableTag extends HtmlTableTag {
         // use HtmlTableWriter to write table
         new HtmlTableWriter(this.properties, this.baseHref, this.export, out, this.getCaptionTag(), this.paginatedList,
                 this.listHelper, this.pagesize, this.getAttributeMap(), this.uid).writeTable(this.tableModel,
-                        this.getUid());
+                        this.getUid(), false);
 
         if (this.varTotals != null) {
             this.pageContext.setAttribute(this.varTotals, this.getTotals());

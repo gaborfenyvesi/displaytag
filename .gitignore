@@ -2,6 +2,7 @@
 *.classpath
 *.factorypath
 *.project
+displaytag/bin
 
 # Maven
 .settings
@@ -16,3 +17,6 @@ junit.log
 *.releaseBackup
 release.properties
 .pmd
+
+# batch/script files
+*.bat

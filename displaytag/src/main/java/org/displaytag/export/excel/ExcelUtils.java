@@ -244,6 +244,16 @@ public class ExcelUtils {
 
     }
 
+    public static final String beforeWriteXls(String str) {
+        if (str != null && !str.isEmpty()) {
+            char firstChar = str.charAt(0);
+            if (firstChar == '=' || firstChar == '+' || firstChar == '-' || firstChar == '@' || firstChar == '*') {
+                str = "'" + str;
+            }
+        }
+        return str;
+    }
+
     // patch from Karsten Voges
     /**
      * Escape certain values that are not permitted in excel cells.
@@ -264,7 +274,8 @@ public class ExcelUtils {
         returnString = Strings.CS.replace(StringUtils.trim(returnString), "\\t", "    ");
         // remove the return, only newline valid in excel
         returnString = Strings.CS.replace(StringUtils.trim(returnString), "\\r", " ");
-        return StringEscapeUtils.unescapeJava(returnString);
+        returnString = StringEscapeUtils.unescapeJava(returnString);
+        return beforeWriteXls(returnString);
     }
 
 }

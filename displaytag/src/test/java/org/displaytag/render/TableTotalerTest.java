@@ -99,7 +99,7 @@ public class TableTotalerTest {
         m.setTotaler(tt);
         tt.init(m);
         final XmlTotalsWriter tw = new XmlTotalsWriter(m);
-        tw.writeTable(m, "safd");
+        tw.writeTable(m, "safd", false);
         final String xml = tw.getXml();
         XmlAssert xmlAssert = XmlAssert.assertThat(xml);
         xmlAssert.valueByXPath("//subgroup[@grouped-by=0]/subtotal/subtotal-cell[4]").isEqualTo("11.0");

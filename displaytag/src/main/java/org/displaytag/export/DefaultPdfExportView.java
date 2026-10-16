@@ -70,18 +70,18 @@ public class DefaultPdfExportView extends DefaultItextExportView {
          */
         @Override
         public void onEndPage(final PdfWriter writer, final Document document) {
+            final PdfContentByte cb = writer.getDirectContent();
             // The header table
-            final PdfPTable table = new PdfPTable(2);
             // A template that will hold the total number of pages.
-            final PdfTemplate tpl = writer.getDirectContent().createTemplate(100, 100);
+            final PdfTemplate tpl = cb.createTemplate(100, 100);
             // The font that will be used.
             BaseFont helv = null;
             try {
                 helv = BaseFont.createFont("Helvetica", BaseFont.WINANSI, false);
-            } catch (DocumentException | IOException e) {
+            } catch (DocumentException | IOException e) { // NOSONAR
             }
-            final PdfContentByte cb = writer.getDirectContent();
             // write the headertable
+            final PdfPTable table = new PdfPTable(2);
             table.setTotalWidth(document.right() - document.left());
             table.writeSelectedRows(0, -1, document.left(), document.getPageSize().getHeight() - 50, cb);
             // compose the footer

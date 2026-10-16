@@ -9,7 +9,6 @@ package org.displaytag.jsptests;
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
-import com.meterware.httpunit.WebTable;
 
 import org.displaytag.tags.TableTagParameters;
 import org.displaytag.test.DisplaytagCase;
@@ -50,8 +49,8 @@ class ExportFilterErrorTest extends DisplaytagCase {
 
         final WebResponse response = this.runner.getResponse(request);
 
-        final WebTable[] tables = response.getTables();
-        Assertions.assertEquals(1, tables.length, "Expected 1 table in result.");
+        Assertions.assertEquals("Security Violation", response.getText(),
+                "Expected \"Security Violation\" in the response");
 
     }
 

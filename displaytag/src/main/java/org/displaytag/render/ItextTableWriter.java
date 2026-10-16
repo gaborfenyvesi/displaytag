@@ -15,13 +15,16 @@ import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 
 import java.awt.Color;
+import java.io.File;
 import java.util.Iterator;
 
 import org.apache.commons.lang3.StringUtils;
+import org.displaytag.FontSettings;
 import org.displaytag.decorator.TableDecorator;
 import org.displaytag.exception.DecoratorException;
 import org.displaytag.exception.ObjectLookupException;
@@ -79,13 +82,59 @@ public class ItextTableWriter extends TableWriterAdapter {
         this.defaultFont = this.getTableFont();
     }
 
+    private static volatile FontSettings fontSettings; // NOSONAR
+
+    private static final String getSysProp(String name, String def) {
+        String ret = System.getProperty(name);
+        return ret == null ? def : ret;
+    }
+
+    public static synchronized FontSettings getFontSettings() {
+        if (fontSettings == null) {
+            String fontsFolder = getSysProp("FontsFolder", "${SystemRoot}\\Fonts");
+            fontsFolder = fontsFolder.replace("${SystemRoot}", System.getenv("SystemRoot"));
+            fontSettings = new FontSettings(fontsFolder, getSysProp("FontsFileRegular", "ARIALUNI.TTF"),
+                    getSysProp("FontsFileBold", "ARIALUNI.TTF"), getSysProp("FontsFileRegularFallback", "arial.ttf"),
+                    getSysProp("FontsFileBoldFallback", "arialbd.ttf"));
+        }
+        return fontSettings;
+    }
+
+    public static File getFontFile(boolean bold) {
+        FontSettings fontSettings = getFontSettings();
+        File fontFile = java.nio.file.Path.of(fontSettings.getFontsFolder(),
+                bold ? fontSettings.getFontsFileBold() : fontSettings.getFontsFileRegular()).toFile();
+        if (!fontFile.exists()) {
+            fontFile = java.nio.file.Path
+                    .of(fontSettings.getFontsFolder(),
+                            bold ? fontSettings.getFontsFileBoldFallback() : fontSettings.getFontsFileRegularFallback())
+                    .toFile();
+        }
+        return fontFile;
+    }
+
+    public static BaseFont createBaseFont(boolean bold) {
+        try {
+            File fontFile = getFontFile(bold);
+            return BaseFont.createFont(fontFile.getAbsolutePath(), BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+        } catch (Exception e) {
+            return FontFactory
+                    .getFont(FontFactory.HELVETICA, 10, bold ? Font.BOLD : Font.NORMAL, new Color(0x00, 0x00, 0x00))
+                    .getBaseFont();
+        }
+    }
+
+    public static Font createFont(boolean bold, float size) {
+        return new Font(createBaseFont(bold), size);
+    }
+
     /**
      * Obtain the font used to render text in the table; Meant to be overriden if a different font is desired.
      *
      * @return The font used to render text in the table.
      */
     protected Font getTableFont() {
-        return FontFactory.getFont(FontFactory.HELVETICA, 10, Font.NORMAL, new Color(0x00, 0x00, 0x00));
+        return createFont(false, 10);
     }
 
     /**
@@ -125,7 +174,7 @@ public class ItextTableWriter extends TableWriterAdapter {
      * @return The caption font.
      */
     protected Font getCaptionFont() {
-        return FontFactory.getFont(FontFactory.HELVETICA, 17, Font.BOLD, new Color(0x00, 0x00, 0x00));
+        return createFont(true, 17);
     }
 
     /**
@@ -179,8 +228,8 @@ public class ItextTableWriter extends TableWriterAdapter {
      * @return The maximum size of all values in this column.
      */
     private float getCellWidth(final HeaderCell headerCell) {
-        final int maxWidth = headerCell.getMaxLength();
-        return maxWidth > 0 ? maxWidth : headerCell.getTitle().length();
+        final double maxWidth = headerCell.getMaxLength();
+        return (float) ((maxWidth > 0) ? maxWidth : headerCell.getTitle().length());
     }
 
     /**
@@ -199,7 +248,6 @@ public class ItextTableWriter extends TableWriterAdapter {
         final Chunk cellContent = new Chunk(model.getFooter(), this.getFooterFont());
         this.setFooterFontStyle(cellContent);
         final PdfPCell cell = new PdfPCell(new Phrase(cellContent));
-        cell.setLeading(8, 0);
         cell.setBackgroundColor(this.getFooterBackgroundColor());
         cell.setHorizontalAlignment(this.getFooterHorizontalAlignment());
         cell.setColspan(model.getNumberOfColumns());
@@ -249,7 +297,7 @@ public class ItextTableWriter extends TableWriterAdapter {
      * @return The footer font.
      */
     protected Font getFooterFont() {
-        return FontFactory.getFont(FontFactory.HELVETICA, 10);
+        return createFont(false, 10);
     }
 
     /**
@@ -364,7 +412,6 @@ public class ItextTableWriter extends TableWriterAdapter {
         final Chunk cellContent = new Chunk(value, this.getHeaderFont());
         this.setHeaderFontStyle(cellContent);
         final PdfPCell cell = new PdfPCell(new Phrase(cellContent));
-        cell.setLeading(8, 0);
         cell.setHorizontalAlignment(this.getHeaderHorizontalAlignment());
         cell.setBackgroundColor(this.getHeaderBackgroundColor());
         return cell;
@@ -427,8 +474,14 @@ public class ItextTableWriter extends TableWriterAdapter {
      *            The font color desired.
      */
     private void setBoldStyle(final Chunk chunk, final Color color) {
-        final Font font = chunk.getFont();
-        chunk.setFont(FontFactory.getFont(font.getFamilyname(), font.getSize(), Font.BOLD, color));
+        Font font = chunk.getFont();
+        Font newFont;
+        try {
+            newFont = createFont(true, font.getSize());
+        } catch (Exception e) {
+            newFont = FontFactory.getFont(font.getFamilyname(), font.getSize(), Font.BOLD, color);
+        }
+        chunk.setFont(newFont);
     }
 
     /**

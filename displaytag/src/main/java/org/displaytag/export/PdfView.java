@@ -13,13 +13,13 @@ import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.ColumnText;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfPageEventHelper;
 import com.lowagie.text.pdf.PdfWriter;
 
-import java.awt.Color;
 import java.io.OutputStream;
 import java.util.Iterator;
 
@@ -99,8 +99,12 @@ public class PdfView implements BinaryExportView {
         this.tablePDF.getDefaultCell().setVerticalAlignment(Element.ALIGN_TOP);
         this.tablePDF.setWidthPercentage(100);
 
-        this.smallFont = FontFactory.getFont(FontFactory.HELVETICA, 7, Font.NORMAL, new Color(0, 0, 0));
-
+        try {
+            BaseFont baseFont = BaseFont.createFont("fonts/unicode-roman.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            smallFont = new Font(baseFont, 7);
+        } catch (Exception e) {
+            smallFont = FontFactory.getFont(FontFactory.HELVETICA, 7);
+        }
     }
 
     /**
@@ -236,8 +240,6 @@ public class PdfView implements BinaryExportView {
     private PdfPCell getCell(final String value) {
         final PdfPCell cell = new PdfPCell(new Phrase(new Chunk(StringUtils.trimToEmpty(value), this.smallFont)));
         cell.setVerticalAlignment(Element.ALIGN_TOP);
-        cell.setLeading(8, 0);
-        cell.setPadding(2);
         return cell;
     }
 

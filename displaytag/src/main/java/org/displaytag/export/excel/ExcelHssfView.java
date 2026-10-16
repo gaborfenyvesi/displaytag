@@ -21,8 +21,6 @@ import org.apache.poi.hssf.usermodel.HSSFRichTextString;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.hssf.util.HSSFColor.HSSFColorPredefined;
-import org.apache.poi.ss.usermodel.FillPatternType;
 import org.displaytag.export.BinaryExportView;
 import org.displaytag.model.Column;
 import org.displaytag.model.ColumnIterator;
@@ -276,11 +274,11 @@ public class ExcelHssfView implements BinaryExportView {
     public HSSFCellStyle createHeaderStyle(final HSSFWorkbook wb, final HeaderCell headerCell) {
         final HSSFCellStyle headerStyle = this.getNewCellStyle();
 
-        headerStyle.setFillPattern(FillPatternType.FINE_DOTS);
-        headerStyle.setFillBackgroundColor(HSSFColorPredefined.BLUE_GREY.getIndex());
+        // REMOVED BY VERBA headerStyle.setFillPattern(FillPatternType.FINE_DOTS);
+        // REMOVED BY VERBA headerStyle.setFillBackgroundColor(HSSFColorPredefined.BLUE_GREY.getIndex());
         final HSSFFont bold = wb.createFont();
         bold.setBold(true);
-        bold.setColor(HSSFColorPredefined.WHITE.getIndex());
+        // REMOVED BY VERBA bold.setColor(HSSFColorPredefined.WHITE.getIndex());
         headerStyle.setFont(bold);
 
         return headerStyle;

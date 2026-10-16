@@ -86,7 +86,7 @@ public abstract class TableWriterTemplate {
      *             Extension classes may throw all sorts of exceptions, depending on their respective formats and
      *             destinations.
      */
-    public void writeTable(final TableModel model, final String id) throws JspException {
+    public void writeTable(final TableModel model, final String id, boolean full) throws JspException {
         try {
             // table id used for logging
             this.id = id;
@@ -129,7 +129,7 @@ public abstract class TableWriterTemplate {
             this.writeTableBodyOpener(model);
 
             // render table body
-            this.writeTableBody(model);
+            this.writeTableBody(model, full);
 
             // close table body
             this.writeTableBodyCloser(model);
@@ -302,9 +302,9 @@ public abstract class TableWriterTemplate {
      * @throws Exception
      *             if an error is encountered while writing the table body.
      */
-    protected void writeTableBody(final TableModel model) throws Exception {
+    protected void writeTableBody(final TableModel model, boolean full) throws Exception {
         // Ok, start bouncing through our list (only the visible part)
-        boolean fullList = false;
+        boolean fullList = full;
         if (!MediaTypeEnum.HTML.equals(model.getMedia()) && model.getProperties().getExportFullList()) {
             fullList = true;
         }

@@ -28,6 +28,8 @@ public class DefaultHssfExportView implements BinaryExportView {
      */
     protected TableModel model;
 
+    protected boolean exportFullList;
+
     /**
      * Do export.
      *
@@ -45,7 +47,7 @@ public class DefaultHssfExportView implements BinaryExportView {
     public void doExport(final OutputStream out) throws IOException, JspException {
         try {
             final HSSFWorkbook wb = new HSSFWorkbook();
-            this.getHssfTableWriter(wb).writeTable(this.model, "-1");
+            this.getHssfTableWriter(wb).writeTable(this.model, "-1", exportFullList);
             wb.write(out);
             wb.close();
         } catch (final Exception e) {
@@ -83,6 +85,7 @@ public class DefaultHssfExportView implements BinaryExportView {
     public void setParameters(final TableModel model, final boolean exportFullList, final boolean includeHeader,
             final boolean decorateValues) {
         this.model = model;
+        this.exportFullList = exportFullList;
     }
 
     /**
@@ -100,7 +103,7 @@ public class DefaultHssfExportView implements BinaryExportView {
     /**
      * Wraps POI-generated exceptions.
      */
-    static class HssfGenerationException extends BaseNestableJspTagException {
+    static class HssfGenerationException extends BaseNestableJspTagException { // NOSONAR
         /**
          * Serial ID.
          */

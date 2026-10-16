@@ -31,6 +31,8 @@ public abstract class DefaultItextExportView implements BinaryExportView {
      */
     private TableModel model;
 
+    private boolean exportFullList;
+
     /**
      * Sets the parameters.
      *
@@ -49,6 +51,7 @@ public abstract class DefaultItextExportView implements BinaryExportView {
     public void setParameters(final TableModel tableModel, final boolean exportFullList, final boolean includeHeader,
             final boolean decorateValues) {
         this.model = tableModel;
+        this.exportFullList = exportFullList;
     }
 
     /**
@@ -82,7 +85,7 @@ public abstract class DefaultItextExportView implements BinaryExportView {
             document.open();
             final PdfPTable table = new PdfPTable(this.model.getNumberOfColumns());
             final ItextTableWriter writer = new ItextTableWriter(table, document);
-            writer.writeTable(this.model, "-1");
+            writer.writeTable(this.model, "-1", exportFullList);
             document.add(table);
             document.close();
         } catch (final Exception e) {

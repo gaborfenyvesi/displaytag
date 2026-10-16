@@ -56,7 +56,7 @@ public class SimpleServletOutputStream extends ServletOutputStream {
     // compilation.
     @Override
     public boolean isReady() {
-        return false;
+        return true;
     }
 
     /**

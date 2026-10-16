@@ -41,7 +41,7 @@ public class HssfDoubleExportView extends DefaultHssfExportView {
             final HSSFWorkbook wb = new HSSFWorkbook();
             final HssfTableWriter writer = this.getHssfTableWriter(wb);
             writer.setSetSheetName("Export");
-            writer.writeTable(this.model, "-1");
+            writer.writeTable(this.model, "-1", exportFullList);
 
             boolean hasGroups = false;
             for (final HeaderCell cell : this.model.getHeaderCellList()) {
@@ -53,7 +53,7 @@ public class HssfDoubleExportView extends DefaultHssfExportView {
             if (hasGroups) {
                 writer.setSetSheetName("Data");
                 this.model.reset();
-                writer.writeTable(this.model, "-1");
+                writer.writeTable(this.model, "-1", exportFullList);
             }
             wb.write(out);
             wb.close();

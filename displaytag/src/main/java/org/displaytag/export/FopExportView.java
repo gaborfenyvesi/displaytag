@@ -86,6 +86,8 @@ public class FopExportView implements BinaryExportView {
      */
     protected TableModel model;
 
+    private boolean exportFullList;
+
     /**
      * Sets the parameters.
      *
@@ -104,6 +106,7 @@ public class FopExportView implements BinaryExportView {
     public void setParameters(final TableModel tableModel, final boolean exportFullList, final boolean includeHeader,
             final boolean decorateValues) {
         this.model = tableModel;
+        this.exportFullList = exportFullList;
     }
 
     /**
@@ -209,7 +212,7 @@ public class FopExportView implements BinaryExportView {
      */
     protected String getXml() throws JspException {
         final XmlTotalsWriter totals = new XmlTotalsWriter(this.model);
-        totals.writeTable(this.model, "-1");
+        totals.writeTable(this.model, "-1", exportFullList);
         return totals.getXml();
     }
 

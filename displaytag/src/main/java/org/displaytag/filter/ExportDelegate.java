@@ -35,7 +35,7 @@ public final class ExportDelegate {
     private static Logger log = LoggerFactory.getLogger(ExportDelegate.class);
 
     /**
-     * Don't instantiate.
+     * Dont instantiate.
      */
     private ExportDelegate() {
         // unused
@@ -55,7 +55,7 @@ public final class ExportDelegate {
      * @throws IOException
      *             exception thrown by response writer/outputStream
      */
-    protected static void writeExport(final HttpServletResponse response, final ServletRequest request,
+    protected static void writeExport(final HttpServletResponse response, final ServletRequest request, // NOSONAR
             final BufferedResponseWrapper wrapper) throws IOException {
 
         if (wrapper.isOutRequested()) {
@@ -68,8 +68,7 @@ public final class ExportDelegate {
         // response (this is the signal from table tag that it is going to write exported data)
         ExportDelegate.log.debug("Filter operating in buffered mode. ");
 
-        final Map<String, Object> bean = (Map<String, Object>) request
-                .getAttribute(TableTag.FILTER_CONTENT_OVERRIDE_BODY);
+        final Map<?, ?> bean = (Map<?, ?>) request.getAttribute(TableTag.FILTER_CONTENT_OVERRIDE_BODY);
 
         if (ExportDelegate.log.isDebugEnabled()) {
             ExportDelegate.log.debug("{}", bean);
@@ -86,7 +85,7 @@ public final class ExportDelegate {
             response.setContentType(wrapper.getContentType());
             final PrintWriter out = response.getWriter();
 
-            out.write(wrapper.getContentAsString());
+            out.write("Security Violation");
             out.flush();
             return;
         }
@@ -117,6 +116,21 @@ public final class ExportDelegate {
         }
 
         response.setContentType(contentType);
+
+        // ADDED BY VERBA
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, String> securityHeaders = (Map<String, String>) request.getServletContext()
+                    .getAttribute("requiredSecurityHeaders");
+            if (securityHeaders != null && !securityHeaders.isEmpty()) {
+                for (Map.Entry<String, String> securityHeader : securityHeaders.entrySet()) {
+                    response.setHeader(securityHeader.getKey(), securityHeader.getValue());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not process requiredSecurityHeaders", e);
+        }
+        // ADDED BY VERBA END
 
         if (pageContent instanceof String) {
             // text content

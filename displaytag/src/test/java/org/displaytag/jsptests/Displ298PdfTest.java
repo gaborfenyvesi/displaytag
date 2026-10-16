@@ -66,7 +66,7 @@ class Displ298PdfTest extends DisplaytagCase {
         Assertions.assertEquals("application/pdf", response.getContentType(), "Expected a different content type.");
 
         final InputStream stream = response.getInputStream();
-        final byte[] result = new byte[3000];
+        final byte[] result = new byte[300000];
         stream.read(result);
 
         final PdfReader reader = new PdfReader(result);

@@ -134,6 +134,9 @@ public class DefaultRequestHelper implements RequestHelper {
         while (parametersName.hasMoreElements()) {
             // ... get the value
             final String paramName = (String) parametersName.nextElement();
+            if (paramName.startsWith("dontForward") || paramName.toLowerCase().contains("password")) {
+                continue;
+            }
 
             this.request.getParameter(paramName);
             // put key/value in the map
