@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
  */
 class RowSorterTest {
 
+    @SuppressWarnings("unchecked")
     private static final Comparator<Object> OBJECT_COMPARATOR = (left, right) -> ((Comparable<Object>) left)
             .compareTo(right);
 

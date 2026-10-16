@@ -48,6 +48,7 @@ public class DefaultComparator implements Comparator<Object> {
      *
      * @return the value
      */
+    @SuppressWarnings("unchecked")
     @Override
     public int compare(final Object object1, final Object object2) {
         int returnValue;

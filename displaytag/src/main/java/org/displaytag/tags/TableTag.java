@@ -909,6 +909,7 @@ public class TableTag extends HtmlTableTag {
      * @throws JspTagException
      *             the jsp tag exception
      */
+    @SuppressWarnings("unchecked")
     private void initParameters() throws JspTagException {
 
         if (TableTag.rhf == null) {
@@ -1292,6 +1293,7 @@ public class TableTag extends HtmlTableTag {
      * all the properties (except the "class" property which is automatically skipped). Of course this isn't possible
      * for empty lists.
      */
+    @SuppressWarnings("unchecked")
     private void describeEmptyTable() {
         this.tableIterator = IteratorUtils.getIterator(this.list);
 
@@ -1387,6 +1389,7 @@ public class TableTag extends HtmlTableTag {
         final HttpServletResponse response = (HttpServletResponse) this.pageContext.getResponse();
         final HttpServletRequest request = (HttpServletRequest) this.pageContext.getRequest();
 
+        @SuppressWarnings("unchecked")
         final Map<String, Object> bean = (Map<String, Object>) request
                 .getAttribute(TableTag.FILTER_CONTENT_OVERRIDE_BODY);
         final boolean usingFilter = bean != null;

@@ -260,11 +260,13 @@ public class MockMimeResponse extends MockPortletResponse implements MimeRespons
         return this.outputStream;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T extends PortletURL & RenderURL> T createRenderURL() {
         return (T) new MockPortletURL(getPortalContext(), MockPortletURL.URL_TYPE_RENDER);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T extends PortletURL & ActionURL> T createActionURL() {
         return (T) new MockPortletURL(getPortalContext(), MockPortletURL.URL_TYPE_ACTION);

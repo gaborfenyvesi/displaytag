@@ -17,9 +17,7 @@
         <version>2.13.1-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.github.hazendaz</groupId>
     <artifactId>displaytag</artifactId>
-    <version>2.13.1-SNAPSHOT</version>
     <name>displaytag</name>
 
     <scm>

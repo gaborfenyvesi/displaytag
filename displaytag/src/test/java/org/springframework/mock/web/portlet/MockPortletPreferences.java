@@ -93,7 +93,7 @@ public class MockPortletPreferences implements PortletPreferences {
     }
 
     @Override
-    public void setValues(String key, String[] values) throws ReadOnlyException {
+    public void setValues(String key, String... values) throws ReadOnlyException {
         Assertions.assertNotNull(key, "Key must not be null");
         if (isReadOnly(key)) {
             throw new ReadOnlyException("Preference '" + key + "' is read-only");

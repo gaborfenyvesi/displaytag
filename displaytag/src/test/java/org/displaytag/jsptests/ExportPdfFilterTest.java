@@ -71,8 +71,9 @@ class ExportPdfFilterTest extends DisplaytagCase {
         final byte[] result = new byte[response.getContentLength()];
         stream.read(result);
 
-        final PdfReader reader = new PdfReader(result);
-        Assertions.assertEquals(1, reader.getNumberOfPages(), "Expected a valid pdf file with a single page");
+        try (final PdfReader reader = new PdfReader(result)) {
+            Assertions.assertEquals(1, reader.getNumberOfPages(), "Expected a valid pdf file with a single page");
+        }
 
     }
 

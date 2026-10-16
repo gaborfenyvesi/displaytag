@@ -9,6 +9,7 @@ package org.displaytag.export;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.PageSize;
+import com.lowagie.text.Rectangle;
 import com.lowagie.text.pdf.PdfPTable;
 
 import java.io.OutputStream;
@@ -25,6 +26,31 @@ import org.displaytag.render.ItextTableWriter;
  * Exporter using iText: subclasses export to any of the iText document types, such as PDF and RTF.
  */
 public abstract class DefaultItextExportView implements BinaryExportView {
+
+    /**
+     * Tables with more columns than this are exported in landscape orientation.
+     */
+    private static final int PORTRAIT_MAX_COLUMNS = 5;
+
+    /**
+     * Left page margin, in points.
+     */
+    public static final float MARGIN_LEFT = 40;
+
+    /**
+     * Right page margin, in points.
+     */
+    public static final float MARGIN_RIGHT = 48;
+
+    /**
+     * Top page margin, in points.
+     */
+    public static final float MARGIN_TOP = 40;
+
+    /**
+     * Bottom page margin, in points.
+     */
+    public static final float MARGIN_BOTTOM = 40;
 
     /**
      * TableModel to render.
@@ -80,7 +106,12 @@ public abstract class DefaultItextExportView implements BinaryExportView {
     @Override
     public void doExport(final OutputStream out) throws JspException {
         try {
-            final Document document = new Document(PageSize.A4.rotate(), 60, 60, 40, 40);
+            final Rectangle pageSize = this.model.getNumberOfColumns() > DefaultItextExportView.PORTRAIT_MAX_COLUMNS
+                    ? PageSize.A4.rotate()
+                    : PageSize.A4;
+            final Document document = new Document(pageSize, DefaultItextExportView.MARGIN_LEFT,
+                    DefaultItextExportView.MARGIN_RIGHT, DefaultItextExportView.MARGIN_TOP,
+                    DefaultItextExportView.MARGIN_BOTTOM);
             this.initItextWriter(document, out);
             document.open();
             final PdfPTable table = new PdfPTable(this.model.getNumberOfColumns());

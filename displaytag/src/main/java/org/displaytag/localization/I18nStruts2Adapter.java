@@ -49,6 +49,7 @@ public class I18nStruts2Adapter implements LocaleResolver, I18nResourceProvider 
      *
      * @see LocaleResolver#resolveLocale(PageContext)
      */
+    @SuppressWarnings("deprecation")
     @Override
     public Locale resolveLocale(final PageContext pageContext) {
 
@@ -99,6 +100,7 @@ public class I18nStruts2Adapter implements LocaleResolver, I18nResourceProvider 
         final String key = resourceKey != null ? resourceKey : defaultValue;
 
         String message = null;
+        @SuppressWarnings("deprecation")
         final ValueStack stack = TagUtils.getStack(pageContext);
         final Iterator<Object> iterator = stack.getRoot().iterator();
 

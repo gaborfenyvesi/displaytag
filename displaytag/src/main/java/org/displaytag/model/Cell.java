@@ -72,6 +72,7 @@ public class Cell implements Comparable<Cell> {
      *
      * @see java.lang.Comparable#compareTo(Object)
      */
+    @SuppressWarnings("unchecked")
     public int compareTo(final Object obj, final Collator collator) {
         if (this.staticValue == null) {
             return -1;

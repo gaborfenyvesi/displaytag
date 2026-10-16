@@ -79,6 +79,7 @@ public final class CollectionUtil {
      * @return List with values taken from the given object, cropped according the startIndex and numberOfItems
      *         parameters
      */
+    @SuppressWarnings("unchecked")
     public static List<Row> getListFromObject(final Object iterableObject, final int startIndex,
             final int numberOfItems) {
         if (iterableObject instanceof List) {

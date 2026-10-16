@@ -158,6 +158,7 @@ public class TotalTableDecorator extends TableDecorator {
      *
      * @return String
      */
+    @SuppressWarnings("unchecked")
     @Override
     public final String finishRow() {
         final StringBuilder buffer = new StringBuilder(1000);

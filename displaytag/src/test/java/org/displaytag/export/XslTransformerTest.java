@@ -43,9 +43,9 @@ class XslTransformerTest {
         final File f = Files.createTempFile("inline", "pdf").toFile();
         final String styleSheetPath = "/org/displaytag/export/asFo_us.xsl";
         FopExportView.transform(XslTransformerTest.XML, styleSheetPath, f);
-        final PdfReader reader = new PdfReader(f.getAbsolutePath());
-        // byte[] page = reader.getPageContent(1);
-        Assertions.assertEquals(1, reader.getNumberOfPages(), "Expected a valid pdf file with a single page");
+        try (final PdfReader reader = new PdfReader(f.getAbsolutePath())) {
+            Assertions.assertEquals(1, reader.getNumberOfPages(), "Expected a valid pdf file with a single page");
+        }
     }
 
     /**

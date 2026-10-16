@@ -351,7 +351,6 @@ public abstract class TableWriterTemplate {
                     // Get the value to be displayed for the column
                     column.initialize();
 
-                    @SuppressWarnings("deprecation")
                     final String cellvalue = MediaTypeEnum.HTML.equals(model.getMedia())
                             ? column.getChoppedAndLinkedValue()
                             : ObjectUtils.toString(column.getValue(true));
@@ -375,7 +374,6 @@ public abstract class TableWriterTemplate {
                     column.initialize();
                     // Get the value to be displayed for the column
 
-                    @SuppressWarnings("deprecation")
                     final String cellvalue = MediaTypeEnum.HTML.equals(model.getMedia())
                             ? column.getChoppedAndLinkedValue()
                             : ObjectUtils.toString(column.getValue(true));
@@ -644,7 +642,6 @@ public abstract class TableWriterTemplate {
      *
      * @return String
      */
-    @SuppressWarnings("deprecation")
     protected short groupColumns(final String value, final String previous, final String next, final int currentGroup) {
 
         short groupingKey = TableWriterTemplate.GROUP_NO_CHANGE;

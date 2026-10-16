@@ -116,7 +116,7 @@ public class MockStateAwareResponse extends MockPortletResponse implements State
     }
 
     @Override
-    public void setRenderParameter(String key, String[] values) {
+    public void setRenderParameter(String key, String... values) {
         Assertions.assertNotNull(key, "Parameter key must not be null");
         Assertions.assertNotNull(values, "Parameter values must not be null");
         this.renderParameters.put(key, values);
@@ -213,7 +213,6 @@ public class MockStateAwareResponse extends MockPortletResponse implements State
 
     @Override
     public MutableRenderParameters getRenderParameters() {
-        // TODO Auto-generated method stub
         return null;
     }
 

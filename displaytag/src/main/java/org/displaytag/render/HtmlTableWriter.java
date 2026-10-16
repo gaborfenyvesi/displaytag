@@ -766,6 +766,7 @@ public class HtmlTableWriter extends TableWriterAdapter {
 
         if (this.uid != null && this.attributeMap.get(TagConstants.ATTRIBUTE_ID) == null) {
             // we need to clone the attribute map in order to "fix" the html id when using only the "uid" attribute
+            @SuppressWarnings("unchecked")
             final Map<String, String> localAttributeMap = (Map<String, String>) this.attributeMap.clone();
             localAttributeMap.put(TagConstants.ATTRIBUTE_ID, this.uid);
 

@@ -23,14 +23,21 @@ import java.awt.Color;
 import java.io.File;
 import java.util.Iterator;
 
+import javax.servlet.jsp.JspException;
+
 import org.apache.commons.lang3.StringUtils;
 import org.displaytag.FontSettings;
 import org.displaytag.decorator.TableDecorator;
 import org.displaytag.exception.DecoratorException;
 import org.displaytag.exception.ObjectLookupException;
 import org.displaytag.model.Column;
+import org.displaytag.model.ColumnIterator;
 import org.displaytag.model.HeaderCell;
+import org.displaytag.model.RowIterator;
 import org.displaytag.model.TableModel;
+import org.displaytag.properties.MediaTypeEnum;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A table writer that formats table as and writes it to an iText document.
@@ -38,6 +45,21 @@ import org.displaytag.model.TableModel;
  * @see org.displaytag.render.TableWriterTemplate
  */
 public class ItextTableWriter extends TableWriterAdapter {
+
+    /**
+     * Logger.
+     */
+    private static final Logger log = LoggerFactory.getLogger(ItextTableWriter.class);
+
+    /**
+     * Number of rows inspected when calculating the column widths.
+     */
+    private static final int WIDTH_SAMPLE_ROWS = 1000;
+
+    /**
+     * Whether the full list (rather than the current page) is written.
+     */
+    private boolean fullList;
 
     /**
      * iText representation of the table.
@@ -76,10 +98,19 @@ public class ItextTableWriter extends TableWriterAdapter {
      * @see org.displaytag.render.TableWriterTemplate#writeTableOpener(org.displaytag.model.TableModel)
      */
     @Override
-    protected void writeTableOpener(final TableModel model) {
+    protected void writeTableOpener(final TableModel model) throws DocumentException {
         this.table.getDefaultCell().setVerticalAlignment(Element.ALIGN_TOP);
         this.table.setWidthPercentage(100);
         this.defaultFont = this.getTableFont();
+        this.applyColumnWidths(model);
+    }
+
+    @Override
+    public void writeTable(final TableModel model, final String id, final boolean full) throws JspException {
+        // same rule as TableWriterTemplate.writeTableBody, so the widths are measured on the rows that are written
+        this.fullList = full
+                || (!MediaTypeEnum.HTML.equals(model.getMedia()) && model.getProperties().getExportFullList());
+        super.writeTable(model, id, full);
     }
 
     private static volatile FontSettings fontSettings; // NOSONAR
@@ -166,6 +197,18 @@ public class ItextTableWriter extends TableWriterAdapter {
         final Paragraph caption = new Paragraph(new Chunk(model.getCaption(), this.getCaptionFont()));
         caption.setAlignment(this.getCaptionHorizontalAlignment());
         this.document.add(caption);
+        // only PDF honours this; RTF already separates the caption from the table
+        this.table.setSpacingBefore(this.getCaptionSpacingAfter());
+    }
+
+    /**
+     * Obtain the vertical space between the caption and the table; Meant to be overriden if a different style is
+     * desired.
+     *
+     * @return The space in points.
+     */
+    protected float getCaptionSpacingAfter() {
+        return 10f;
     }
 
     /**
@@ -201,35 +244,224 @@ public class ItextTableWriter extends TableWriterAdapter {
     protected void writeTableHeader(final TableModel model) throws DocumentException {
         final Iterator<HeaderCell> iterator = model.getHeaderCellList().iterator();
 
-        final float[] widths = new float[model.getNumberOfColumns()];
-        for (int i = 0; iterator.hasNext(); i++) {
+        while (iterator.hasNext()) {
             final HeaderCell headerCell = iterator.next();
-            widths[i] = this.getCellWidth(headerCell);
-
-            String columnHeader = headerCell.getTitle();
-
-            if (columnHeader == null) {
-                columnHeader = StringUtils.capitalize(headerCell.getBeanPropertyName());
-            }
-
-            final PdfPCell hdrCell = this.getHeaderCell(columnHeader);
+            final PdfPCell hdrCell = this.getHeaderCell(ItextTableWriter.getHeaderTitle(headerCell));
             this.table.addCell(hdrCell);
         }
         this.table.setHeaderRows(1);
-        this.table.setWidths(widths);
     }
 
     /**
-     * Returns the maximum size of all values in this column.
+     * Gets the text shown in the header of a column.
      *
      * @param headerCell
-     *            Header cell for this column.
+     *            the header cell
      *
-     * @return The maximum size of all values in this column.
+     * @return the title, or the capitalized property name if there is no title
      */
-    private float getCellWidth(final HeaderCell headerCell) {
-        final double maxWidth = headerCell.getMaxLength();
-        return (float) ((maxWidth > 0) ? maxWidth : headerCell.getTitle().length());
+    private static String getHeaderTitle(final HeaderCell headerCell) {
+        final String title = headerCell.getTitle();
+        return title != null ? title : StringUtils.capitalize(headerCell.getBeanPropertyName());
+    }
+
+    /**
+     * Sets the column widths of the table, based on the content of the first {@value #WIDTH_SAMPLE_ROWS} rows.
+     *
+     * @param model
+     *            the table model
+     *
+     * @throws DocumentException
+     *             if the widths cannot be applied to the table
+     */
+    private void applyColumnWidths(final TableModel model) throws DocumentException {
+        float[] longest;
+        try {
+            longest = this.measureLongestValues(model);
+        } catch (ObjectLookupException | DecoratorException e) {
+            ItextTableWriter.log.warn("Unable to measure column values, using equal column widths", e);
+            longest = new float[model.getNumberOfColumns()];
+        }
+        this.table.setWidths(ItextTableWriter.computeColumnWidths(longest, this.measureHeaderMinimums(model)));
+        // OpenRTF reads the absolute widths as percentages, so make them add up to 100. PDF ignores this, because the
+        // width is not locked: the table is laid out using the width percentage when it is added to the document.
+        this.table.setTotalWidth(100f);
+    }
+
+    /**
+     * Measures the rendered width of the longest value (or line) of each column in the first
+     * {@value #WIDTH_SAMPLE_ROWS} rows that will be exported.
+     *
+     * @param model
+     *            the table model
+     *
+     * @return the widest value in points per column; 0 if the column is empty in all sampled rows
+     *
+     * @throws ObjectLookupException
+     *             if a value cannot be read
+     * @throws DecoratorException
+     *             if a value cannot be decorated
+     */
+    private float[] measureLongestValues(final TableModel model) throws ObjectLookupException, DecoratorException {
+        final int columns = model.getNumberOfColumns();
+        final float[] longest = new float[columns];
+        final BaseFont baseFont = this.defaultFont.getCalculatedBaseFont(false);
+        final float fontSize = this.defaultFont.getCalculatedSize();
+
+        final RowIterator rowIterator = model.getRowIterator(this.fullList);
+        for (int r = 0; r < ItextTableWriter.WIDTH_SAMPLE_ROWS && rowIterator.hasNext(); r++) {
+            final ColumnIterator columnIterator = rowIterator.next().getColumnIterator(model.getHeaderCellList());
+            for (int c = 0; c < columns && columnIterator.hasNext(); c++) {
+                final Column column = columnIterator.nextColumn();
+                column.initialize();
+                final Object value = column.getValue(true);
+                final String text = StringUtils.trim(value != null ? value.toString() : null);
+                if (StringUtils.isEmpty(text)) {
+                    continue;
+                }
+                for (final String line : text.split("\\R")) {
+                    final String trimmed = line.trim();
+                    if (!trimmed.isEmpty()) {
+                        // a value never counts as empty, even if the font has no glyphs for it
+                        longest[c] = Math.max(longest[c], Math.max(1f, baseFont.getWidthPoint(trimmed, fontSize)));
+                    }
+                }
+            }
+        }
+        return longest;
+    }
+
+    /**
+     * Measures the width each column needs to show the longest word of its header without breaking it.
+     *
+     * @param model
+     *            the table model
+     *
+     * @return the minimum width of each column in percent of the table width; 0 if there is no header
+     */
+    private float[] measureHeaderMinimums(final TableModel model) {
+        final float[] minimums = new float[model.getNumberOfColumns()];
+        final float tableWidth = this.document.right() - this.document.left();
+        if (!model.getProperties().getShowHeader() || tableWidth <= 0) {
+            return minimums;
+        }
+        final BaseFont baseFont = ItextTableWriter.createFont(true, this.defaultFont.getSize())
+                .getCalculatedBaseFont(false);
+        final float fontSize = this.defaultFont.getCalculatedSize();
+        final PdfPCell sample = new PdfPCell();
+        // cell padding plus a little slack for the borders and rounding
+        final float padding = sample.getPaddingLeft() + sample.getPaddingRight() + 2f;
+
+        final Iterator<HeaderCell> iterator = model.getHeaderCellList().iterator();
+        for (int c = 0; c < minimums.length && iterator.hasNext(); c++) {
+            final String title = ItextTableWriter.getHeaderTitle(iterator.next());
+            if (title == null) {
+                continue;
+            }
+            float widest = 0;
+            for (final String word : StringUtils.split(title)) {
+                widest = Math.max(widest, baseFont.getWidthPoint(word, fontSize));
+            }
+            if (widest > 0) {
+                minimums[c] = (widest + padding) * 100f / tableWidth;
+            }
+        }
+        return minimums;
+    }
+
+    /**
+     * Calculates the column widths, in percent of the table width, without header minimums.
+     *
+     * @param longest
+     *            the width of the longest value of each column; 0 (or less) means the column has no data
+     *
+     * @return the column widths in percent, adding up to 100
+     *
+     * @see #computeColumnWidths(float[], float[])
+     */
+    public static float[] computeColumnWidths(final float[] longest) {
+        return ItextTableWriter.computeColumnWidths(longest, new float[longest.length]);
+    }
+
+    /**
+     * Calculates the column widths, in percent of the table width.
+     * <ul>
+     * <li>Each column that has no data gets the average width (100 / number of columns).</li>
+     * <li>The columns with data share the rest, in proportion to their longest value.</li>
+     * <li>No column is narrower than its minimum: a quarter of the average width, or the given header minimum if that
+     * is larger. Such columns stay exactly at their minimum, and only the other columns are scaled down so that the
+     * widths add up to 100 again.</li>
+     * </ul>
+     * If no column has data, all columns get the same width (still respecting the minimums). If the minimums alone
+     * exceed 100, they are scaled down proportionally.
+     *
+     * @param longest
+     *            the width of the longest value of each column; 0 (or less) means the column has no data
+     * @param headerMinimums
+     *            the minimum width of each column in percent, needed by its header; 0 for none
+     *
+     * @return the column widths in percent, adding up to 100
+     */
+    public static float[] computeColumnWidths(final float[] longest, final float[] headerMinimums) {
+        final int columns = longest.length;
+        final float[] widths = new float[columns];
+        if (columns == 0) {
+            return widths;
+        }
+        final float average = 100f / columns;
+
+        float dataTotal = 0;
+        int dataColumns = 0;
+        for (final float value : longest) {
+            if (value > 0) {
+                dataTotal += value;
+                dataColumns++;
+            }
+        }
+
+        final float dataShare = average * dataColumns;
+        final float[] minimums = new float[columns];
+        float minimumTotal = 0;
+        for (int i = 0; i < columns; i++) {
+            widths[i] = longest[i] > 0 ? dataShare * longest[i] / dataTotal : average;
+            minimums[i] = Math.max(average / 4, i < headerMinimums.length ? headerMinimums[i] : 0);
+            minimumTotal += minimums[i];
+        }
+        if (minimumTotal >= 100f) {
+            for (int i = 0; i < columns; i++) {
+                widths[i] = minimums[i] * 100f / minimumTotal;
+            }
+            return widths;
+        }
+
+        // fix the columns that would fall below their minimum and scale the others to fill the rest; fixing a column
+        // shrinks the others further, so repeat until nothing changes
+        final boolean[] fixed = new boolean[columns];
+        boolean changed = true;
+        float scale = 1f;
+        while (changed) {
+            changed = false;
+            float fixedTotal = 0;
+            float freeTotal = 0;
+            for (int i = 0; i < columns; i++) {
+                if (fixed[i]) {
+                    fixedTotal += minimums[i];
+                } else {
+                    freeTotal += widths[i];
+                }
+            }
+            scale = (100f - fixedTotal) / freeTotal;
+            for (int i = 0; i < columns; i++) {
+                if (!fixed[i] && widths[i] * scale < minimums[i]) {
+                    fixed[i] = true;
+                    changed = true;
+                }
+            }
+        }
+        for (int i = 0; i < columns; i++) {
+            widths[i] = fixed[i] ? minimums[i] : widths[i] * scale;
+        }
+        return widths;
     }
 
     /**

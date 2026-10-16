@@ -151,7 +151,7 @@ public final class SortOrderEnum implements Serializable {
      * @return iterator
      */
     public static Iterator<SortOrderEnum> iterator() {
-        return new ArrayIterator(SortOrderEnum.ALL);
+        return new ArrayIterator<SortOrderEnum>(SortOrderEnum.ALL);
     }
 
     /**

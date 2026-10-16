@@ -102,7 +102,7 @@ public class MockActionResponse extends MockStateAwareResponse implements Action
     }
 
     @Override
-    public void setRenderParameter(String key, String[] values) {
+    public void setRenderParameter(String key, String... values) {
         if (this.redirectedUrl != null) {
             throw new IllegalStateException("Cannot set render parameters after sendRedirect has been called");
         }

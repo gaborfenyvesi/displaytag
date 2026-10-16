@@ -78,6 +78,7 @@ public final class ExportViewFactory {
      * @param viewClassName
      *            export view class name
      */
+    @SuppressWarnings("unchecked")
     public void registerExportView(final String name, final String viewClassName) {
         Class<ExportView> exportClass;
         try {

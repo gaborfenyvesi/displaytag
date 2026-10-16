@@ -519,6 +519,7 @@ public final class TableProperties implements Cloneable {
 
             if (className != null) {
                 try {
+                    @SuppressWarnings("unchecked")
                     final Class<LocaleResolver> classProperty = (Class<LocaleResolver>) ReflectHelper
                             .classForName(className);
                     TableProperties.localeResolver = classProperty.getDeclaredConstructor().newInstance();
@@ -1223,6 +1224,7 @@ public final class TableProperties implements Cloneable {
         if (TableProperties.resourceProvider == null) {
             if (className != null) {
                 try {
+                    @SuppressWarnings("unchecked")
                     final Class<I18nResourceProvider> classProperty = (Class<I18nResourceProvider>) ReflectHelper
                             .classForName(className);
                     TableProperties.resourceProvider = classProperty.getDeclaredConstructor().newInstance();
@@ -1377,6 +1379,7 @@ public final class TableProperties implements Cloneable {
         final String className = this.getProperty(TableProperties.PROPERTY_DEFAULT_COMPARATOR);
         if (className != null) {
             try {
+                @SuppressWarnings("unchecked")
                 final Class<Comparator<Object>> classProperty = (Class<Comparator<Object>>) ReflectHelper
                         .classForName(className);
                 return classProperty.getDeclaredConstructor().newInstance();

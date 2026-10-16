@@ -71,7 +71,7 @@ public abstract class MockBaseURL implements BaseURL {
     }
 
     @Override
-    public void setParameter(String key, String[] values) {
+    public void setParameter(String key, String... values) {
         Assertions.assertNotNull(key, "Parameter key must be null");
         Assertions.assertNotNull(values, "Parameter values must not be null");
         this.parameters.put(key, values);

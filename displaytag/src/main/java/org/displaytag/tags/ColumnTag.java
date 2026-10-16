@@ -252,6 +252,7 @@ public class ColumnTag extends BodyTagSupport implements MediaUtil.SupportsMedia
      * @param comparatorObj
      *            the comparator, classname or object
      */
+    @SuppressWarnings("unchecked")
     public void setComparator(final Object comparatorObj) {
         // @todo don't do this! Setters should remains simple setters and any evaluation should be done in doEndTag()!
         if (comparatorObj instanceof Comparator) {

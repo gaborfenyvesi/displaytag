@@ -67,6 +67,7 @@ class TldTest {
      * @throws Exception
      *             any Exception generated during test.
      */
+    @SuppressWarnings("unchecked")
     public void checkTld(final String checkedTld) throws Exception {
         // Allow access to class as this is only a test case and low risk
         final BeanUtilsBean bub = new BeanUtilsBean();

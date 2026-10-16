@@ -494,6 +494,7 @@ public class PortletHref implements Href {
      *
      * @see org.displaytag.util.Href#toString()
      */
+    @SuppressWarnings("deprecation")
     @Override
     public String toString() {
         final PortletURL url;
